@@ -1,106 +1,88 @@
 
-  const express = require('express')
-  const app = express()
-  require('dotenv').config()
-  const port = process.env.PORT || 5000
-  var router = express.Router()
-  const got = require('got');
-const { pipeline } = require('stream');
-  // !important! 
-  // you need to install the following libraries |express|[dotenv > if required]
-  // or run this command >> npm i express dotenv 
+const { SSL_OP_EPHEMERAL_RSA } = require("constants");
+const fetch = require("node-fetch");
+const prompt = require("prompt");
 
-  
-  
-  app.listen(port , ()=> console.log('> Server is up and running on port : ' + port))
+// construct the URL to post to a publication
+const typical_url = `https://sync.appfluence.com/api/v1/`;
+const my_token = 'PUT YOUR PERSONAL TOKEN HERE!';
 
-  app.get('/' , (req , res)=>{
-  
-     res.send('hello from simple server :)')
-  
-  })
+console.log("\n---------------Hello!---------------");
 
-  app.get('/heyd/', (req, res, next) => {
-    request.get({
-      url: 'https://sync.appfluence.com/api/v1/project/105315/owners',
-      body: JSON.stringify(send),
+const login = (async () => {
+  const response = await fetch(
+    typical_url + `me/`,
+    {
+      method: 'GET',
       headers: {
-         "Content-Type":"application/json",
-         "Authorization": "Bearer insert_your_tocken_here"
-}, 
-    }, function (error, response, body) {
-      console.log("hiii");
-      console.log(response.statusCode);
-      if (!error && response.statusCode == 200) {
-        // Successful call
-        var results = JSON.parse(body);
-        console.log(results) // View Results
-      }
-      else{
-          console.log("error");
-      }
-    });
-  });
-
-
-app.get('/hey', function(req, res, next) {
-  request({
-    url: 'http://www.giantbomb.com/api/search',
-    qs: {
-      api_key: '123456',
-      query: 'World of Warcraft: Legion'
-    },
-    function(error, response, body) {
-      if (!error && response.statusCode === 200) {
-        console.log(body);
-        res.json(body);
-      } else {
-        res.json(error);
+        "Authorization": `Bearer ${my_token}`,
+        "Content-type": "application/json",
       }
     }
-  });
-});
+  );
+  if(response.ok) {
+    const data = await response.json(); // Here you have the data that you need
+    var id = data['id'];
+    console.log("Success in login, your id is "+ id);
+    return id;
+  }
+  else{
+    console.log("The fetch petition failed");
+    return 1;
+  }
 
-module.exports = router;
 
+})();
 
+const day = Math.trunc(Date.now() / 100000000);
 
-
-
-app.get('/try/', function(req, res) {
-  const dataStream = got.stream({
-      url: 'https://swapi.dev/api/people/1/',
-      
-  });
-  pipeline(dataStream, res, (err) => {
-      if (err) {
-          console.log(err);
-          res.sendStatus(500);
+const items_today = (async () => {
+  const id = await login;
+  const response = await fetch(
+    
+    typical_url + `item/?owner=${id}&dueDate__startswith=${day}`,
+    {
+      method: 'GET',
+      headers: {
+        "Authorization": `Bearer ${my_token}`,
+        "Content-type": "application/json",
       }
-      else{
-          console.log((res));
-          console.log("we did it!");
+    }
+  );
+  if(response.ok) {
+    console.log("\nHere are your items for today:")
+    const data = await response.json(); // Here you have the data that you need
+    console.log(data['objects']['owner_username']);
+    return data;
+  }
+  else{
+    console.log("The fetch petition failed");
+    return 1;
+  }
+})();
+
+(async () => {
+  const items_t = await items_today; 
+  const id = await login;
+  const {election} = await prompt.get(['Which item would you like to push?']);
+  const response = await fetch(
+    
+    typical_url + `item/?owner=${id}&dueDate__startswith=${day}`,
+    {
+      method: 'GET',
+      headers: {
+        "Authorization": `Bearer ${my_token}`,
+        "Content-type": "application/json",
       }
-  });
-});
-
-
-app.get('/prueba/', function(req, res) {
-    const dataStream = got.stream({
-        url: 'https://sync.appfluence.com/api/v1/project/105315/items/',
-        headers: {
-            "Content-Type":"application/json",
-            "Authorization": "Bearer insert_your_tocken_here"
-   }, 
-    });
-    pipeline(dataStream, res, (err) => {
-        if (err) {
-            console.log(err);
-            res.sendStatus(500);
-        }
-        
-        else{
-            console.log("we did it!");
-        }
-    });
-  });
+    }
+  );
+  if(response.ok) {
+    console.log("\nHere are your items for today:")
+    const data = await response.json(); // Here you have the data that you need
+    console.log(data['objects']['owner_username']);
+  }
+  else{
+    console.log("The fetch petition failed");
+    return 1;
+  }
+})();
