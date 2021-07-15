@@ -1,11 +1,12 @@
 
+const { log } = require("console");
 const { SSL_OP_EPHEMERAL_RSA } = require("constants");
 const fetch = require("node-fetch");
 const prompt = require("prompt");
 
 // construct the URL to post to a publication
 const typical_url = `https://sync.appfluence.com/api/v1/`;
-const my_token = 'PUT YOUR PERSONAL TOKEN HERE!';
+const my_token = 'PUT YOUR PERSONAL TOKEN HERE';
 
 console.log("\n---------------Hello!---------------");
 
@@ -50,9 +51,13 @@ const items_today = (async () => {
     }
   );
   if(response.ok) {
-    console.log("\nHere are your items for today:")
-    const data = await response.json(); // Here you have the data that you need
-    console.log(data['objects']['owner_username']);
+    console.log("\nHere are your items that are due today:")
+    var data = await response.json(); // Here you have the data that you need
+    data = data['objects'];
+
+    for(var i in data)
+      console.log(i + ". " + data[i].name)
+
     return data;
   }
   else{
@@ -61,6 +66,7 @@ const items_today = (async () => {
   }
 })();
 
+/*
 (async () => {
   const items_t = await items_today; 
   const id = await login;
@@ -86,3 +92,4 @@ const items_today = (async () => {
     return 1;
   }
 })();
+*/
